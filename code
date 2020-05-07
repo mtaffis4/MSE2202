@@ -1,0 +1,95 @@
+
+#include <Servo.h>
+
+Servo myservo;  // create servo object to control a servo
+int servopen = 45;    
+int servoclose = 0;
+
+int ledPinv = 2; //vent on
+int ledPinf = 3; //fan on
+int ledPins = 4; //system on
+
+int potPin = 6;
+
+int val = 0;
+
+int sensePin = A0;  // outside temp
+int sensorInput;    
+double temp; 
+int sensePin1 = A1;  //inside temp
+int sensorInput1;    
+double temp1;
+
+int switch_pin = 5;
+
+const int ci_Motor = 8;
+
+void setup() {
+  Serial.begin(9600);
+
+ pinMode(ledPinv, OUTPUT);
+ pinMode(ledPinf, OUTPUT);
+ pinMode(ledPins, OUTPUT);
+ pinMode(switch_pin, INPUT);
+ pinMode(potPin, OUTPUT);
+ 
+  pinMode(ci_Motor, OUTPUT);
+  servo_Motor.attach(ci_Motor);
+  
+
+  myservo.attach(9);  // attaches the servo on pin 9 to the servo object
+}
+
+
+void loop()
+{
+  if(digitalRead(switch_pin) == HIGH){
+    digitalWrite(ledPins, HIGH);
+    val = analogRead(potPin);    // read the value from the sensor,set temp
+    val = map(val, 0, 1023, 0, 180);     // scale it to use it with the servo (value between 0 and 180)
+
+     sensorInput = analogRead(A0);        //read the analog sensor and store it
+     temp = (double)sensorInput / 1024;   //find percentage of input reading
+     temp = temp * 5;                     //multiply by 5V to get voltage
+     temp = temp - 0.5;                   //Subtract the offset 
+     temp = temp * 100;//Convert to degrees 
+     
+     sensorInput1 = analogRead(A1);        //read the analog sensor and store it
+     temp1 = (double)sensorInput1 / 1024;   //find percentage of input reading
+     temp1 = temp1 * 5;                     //multiply by 5V to get voltage
+     temp1 = temp1 - 0.5;                   //Subtract the offset 
+     temp1 = temp1 * 100;
+     
+     if (temp - val > 2){
+    myservo.write(servopen); //open vent
+    digitalWrite(ledPinv, HIGH);
+    }
+    if (temp1<temp){
+     ui_Motor_Speed = 1800; // fan on 
+     digitalWrite(ledPinf, HIGH);  // led fan on
+    }
+    
+    if (temp1>temp){
+     ui_Motor_Speed = 1200; // fan on opposite direction
+     digitalWrite(ledPinf, HIGH);  // led fan on
+    }
+    
+    if (val-temp>2){
+    myservo.write(servoclose); //close vent
+    
+    }
+  }
+   if(digitalRead(switch_pin) == LOW){
+    digitalWrite(ledPins, LOW);
+    digitalWrite(ledPinv, LOW);
+    digitalWrite(ledPinf, LOW); 
+    myservo.write(servoclose); //close vent
+    ui_Motor_Speed = 1500; // fan stop
+    
+    }
+  
+         
+
+          
+}
+ 
